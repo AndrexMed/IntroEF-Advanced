@@ -14,6 +14,8 @@ namespace IntroEF_Avanzado.Models.Utilidades
             CreateMap<CrearPeliculaDTO, Pelicula>()
                 .ForMember(ent => ent.Generos, dto => dto.MapFrom(campo => campo.Generos.Select(id => new Genero { Id = id})));
 
+            CreateMap<Actor, ActorDTO>();
+
             CreateMap<PeliculaActorDTO, PeliculaActor>();
 
             CreateMap<CrearComentarioDTO, Comentario>();

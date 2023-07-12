@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using IntroEF_Avanzado.Models.Data;
 using IntroEF_Avanzado.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -20,11 +21,29 @@ namespace IntroEF_Avanzado.Controllers
             this.mapper = mapper;
         }
 
+        [HttpGet("idyNombre")]
+        public async Task<ActionResult<IEnumerable<ActorDTO>>> GetIdyNombre()
+        {
+            //  SIN AUTOMAPER
+            //return await _context.Actores
+            //    .Select(a => new ActorDTO { Id = a.Id, Nombre = a.Nombre }).ToListAsync();
+
+            //Con automapper
+            return await _context.Actores.ProjectTo<ActorDTO>(mapper.ConfigurationProvider)
+                .ToListAsync();
+
+        }
+
         [HttpGet("nombre")]
         public async Task<ActionResult<IEnumerable<Actor>>> Get(string nombreActor)
         {
             //Version1
-            return await _context.Actores.Where(a => a.Nombre == nombreActor).ToListAsync();
+            //return await _context.Actores.Where(a => a.Nombre == nombreActor).ToListAsync();
+            return await _context.Actores
+                .Where(a => a.Nombre == nombreActor)
+                  .OrderBy(a => a.Nombre)
+                      .ThenByDescending(a => a.FechaNacimiento)
+                 .ToListAsync();
         }
 
         [HttpGet("nombre/v2")]
@@ -41,23 +60,24 @@ namespace IntroEF_Avanzado.Controllers
                 .Where(a => a.FechaNacimiento >= inicio && a.FechaNacimiento <= fin).ToListAsync();
         }
 
-        //[HttpGet("{id:int")]
-        //public async Task<ActionResult<IEnumerable<Actor>>> GetActor(int id)
-        //{
-        //    var actor = await _context.Actores.FirstOrDefaultAsync(a => a.Id == id);
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<IEnumerable<Actor>>> GetActor(int id)
+        {
+            var actor = await _context.Actores.FirstOrDefaultAsync(a => a.Id == id);
 
-        //    if (actor == null)
-        //    {
-        //        return NotFound();
-        //    }
+            if (actor is null)
+            {
+                return NotFound();
+            }
 
-        //    return Ok(actor);
-        //}
+            return Ok(actor);
+        }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Actor>>> Get()
         {
-            return await _context.Actores.ToListAsync();
+            //return await _context.Actores.OrderBy(a => a.FechaNacimiento).ToListAsync();
+            return await _context.Actores.OrderByDescending(a => a.FechaNacimiento).ToListAsync();
         }
 
         [HttpPost]
