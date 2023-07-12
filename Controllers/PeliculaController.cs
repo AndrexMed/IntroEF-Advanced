@@ -21,6 +21,50 @@ namespace IntroEF_Avanzado.Controllers
             this.mapper = mapper;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<Pelicula>> Get(int id)
+        {
+            var pelicula = await _context.Peliculas
+                .Include(p => p.Generos)
+                .Include(p => p.Comentarios)
+                .Include(p => p.PeliculaActores.OrderBy(pa => pa.Orden))
+                    .ThenInclude(pa => pa.Actor)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (pelicula is null)
+            {
+                return NotFound();
+            }
+            return pelicula;
+        }
+
+        [HttpGet("select/{id:int}")]
+        public async Task<ActionResult<Pelicula>> GetSelect(int id)
+        {
+            var pelicula = await _context.Peliculas
+                .Select(pel => new
+                {
+                    pel.Id,
+                    pel.Titulo,
+                    Generos = pel.Generos.Select(g => g.Nombre).ToList(),
+                    Actores = pel.PeliculaActores.OrderBy(pa => pa.Orden).Select(pa =>
+                    new {
+                        Id = pa.ActorId,
+                        pa.Actor.Nombre,
+                        pa.Personaje
+                    }),
+                    CantidadComentarios = pel.Comentarios.Count()
+
+                })
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (pelicula is null)
+            {
+                return NotFound();
+            }
+            return Ok(pelicula);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Post(CrearPeliculaDTO crearPeliculaDTO)
         {
